@@ -19,9 +19,8 @@ def init_app():
     db.init_app(app)
 
     """ 
-    Use app_context to ensure functions within the block can access current_app
-    This is not strictly necessary in this app, since I don't access the app configuration,
-    but being familiar with this format will make it easier if I need to do so in future projects.
+    Use app_context to ensure functions within the block can access current_app, which
+    can be helpful to access the config or log errors.
     """
     with app.app_context():
         from app.user import user_bp
