@@ -65,12 +65,8 @@ def login():
 @user_bp.route("/logout")
 def logout():
     """Handle logout of user."""
-
-    # IMPLEMENT THIS
-
-
-##############################################################################
-# General user routes:
+    do_logout()
+    return redirect("/")
 
 
 @user_bp.route("/users")
