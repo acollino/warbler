@@ -1,5 +1,5 @@
-from flask import render_template, redirect, flash, request, g
-from sqlalchemy.exc import IntegrityError
+from flask import render_template, redirect, flash, request, g, current_app
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .user_forms import UserAddForm, LoginForm, EditProfileForm
 from app.models import User, Message
 from .user_util import do_login, do_logout
@@ -167,7 +167,23 @@ def profile():
 
     form = EditProfileForm()
     if form.validate_on_submit():
-        pass
+        user = User.authenticate(g.user.username, form.password.data)
+
+        if user:
+            for field, value in form.data.items():
+                valid_field = field != "csrf_token" and field != "password"
+                not_empty = value != ""
+                if valid_field and not_empty:
+                    setattr(user, field, value)
+            try:
+                db.session.commit()
+                g.user = user
+                return redirect(f"/users/{user.id}")
+            except SQLAlchemyError as e:
+                current_app.log_exception(e)
+                db.session.rollback()
+                flash("Due to an error, your profile could not be updated.", "danger")
+
     return render_template("user/edit.html", form=form)
 
 
