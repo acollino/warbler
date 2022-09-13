@@ -136,7 +136,7 @@ def add_follow(follow_id):
         return redirect("/")
 
     followed_user = User.query.get_or_404(follow_id)
-    g.user.following.user_bpend(followed_user)
+    g.user.following.append(followed_user)
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
