@@ -100,7 +100,6 @@ def users_show(user_id):
         .limit(100)
         .all()
     )
-    messages = sorted(user.messages)
     return render_template("user/show.html", user=user, messages=messages)
 
 

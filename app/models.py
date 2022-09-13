@@ -5,6 +5,7 @@ I feel it would be preferable to break this file into smaller model files for ea
 However, this is complicated by:
     • Some of the routes rely on access to multiple models (ie user_routes require Messages)
     • The 'follower <-> followed_user' many-to-many relationship requires a defined Follows class
+    
 This makes the imports for the models more straightforward if they are all contained here.
 """
 
