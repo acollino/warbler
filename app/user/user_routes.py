@@ -209,7 +209,7 @@ def add_like(msg_id):
 
     if not g.user:
         flash("You must be logged in to like a message.", "danger")
-        return redirect("/")
+        return redirect(request.referrer)
 
     msg = Message.query.get_or_404(msg_id)
     if msg in g.user.likes:
