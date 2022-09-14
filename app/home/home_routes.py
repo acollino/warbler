@@ -11,9 +11,17 @@ def homepage():
     - logged in: 100 most recent messages of followed_users
     """
     if g.get("user", None):
-        messages = Message.query.order_by(Message.timestamp.desc()).limit(100).all()
-
-        return render_template("home/home.html", messages=messages)
+        following_ids = [user.id for user in g.user.following]
+        messages = (
+            Message.query.filter(
+                (Message.user_id.in_(following_ids)) | (Message.user_id == g.user.id)
+            )
+            .order_by(Message.timestamp.desc())
+            .limit(100)
+            .all()
+        )
+        liked_msg_ids = [message.id for message in g.user.likes]
+        return render_template("home/home.html", messages=messages, likes=liked_msg_ids)
 
     else:
         return render_template("home/home-anon.html")
@@ -26,13 +34,14 @@ def homepage():
 #
 # https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
 
-
-@home_bp.after_request
+# Changed to after_app_request from after_request to occur after requests from other blueprints
+@home_bp.after_app_request
 def add_header(req):
     """Add non-caching headers on every request."""
 
-    req.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    req.headers[
+        "Cache-Control"
+    ] = "no-cache, no-store, must-revalidate, public, max-age=0"
     req.headers["Pragma"] = "no-cache"
     req.headers["Expires"] = "0"
-    req.headers["Cache-Control"] = "public, max-age=0"
     return req

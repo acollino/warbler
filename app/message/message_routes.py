@@ -20,7 +20,7 @@ def messages_add():
 
     if form.validate_on_submit():
         msg = Message(text=form.text.data)
-        g.user.messages.message_bpend(msg)
+        g.user.messages.append(msg)
         db.session.commit()
 
         return redirect(f"/users/{g.user.id}")

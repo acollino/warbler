@@ -5,6 +5,7 @@ I feel it would be preferable to break this file into smaller model files for ea
 However, this is complicated by:
     • Some of the routes rely on access to multiple models (ie user_routes require Messages)
     • The 'follower <-> followed_user' many-to-many relationship requires a defined Follows class
+    
 This makes the imports for the models more straightforward if they are all contained here.
 """
 
@@ -86,13 +87,14 @@ class User(db.Model):
         nullable=False,
     )
 
-    messages = db.relationship("Message")
+    messages = db.relationship("Message", back_populates="user")
 
     followers = db.relationship(
         "User",
         secondary="follows",
         primaryjoin=(Follows.user_being_followed_id == id),
         secondaryjoin=(Follows.user_following_id == id),
+        back_populates="following",
     )
 
     following = db.relationship(
@@ -100,9 +102,10 @@ class User(db.Model):
         secondary="follows",
         primaryjoin=(Follows.user_following_id == id),
         secondaryjoin=(Follows.user_being_followed_id == id),
+        back_populates="followers",
     )
 
-    likes = db.relationship("Message", secondary="likes")
+    likes = db.relationship("Message", secondary="likes", back_populates="liked_by")
 
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
@@ -186,7 +189,9 @@ class Message(db.Model):
         nullable=False,
     )
 
-    user = db.relationship("User")
+    user = db.relationship("User", back_populates="messages")
+
+    liked_by = db.relationship("User", secondary="likes", back_populates="likes")
 
 
 def connect_db(app):

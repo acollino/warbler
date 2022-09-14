@@ -1,6 +1,6 @@
-from flask import render_template, redirect, flash, request, g
-from sqlalchemy.exc import IntegrityError
-from .user_forms import UserAddForm, LoginForm
+from flask import render_template, redirect, flash, request, g, current_app
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from .user_forms import UserAddForm, LoginForm, EditProfileForm
 from app.models import User, Message
 from .user_util import do_login, do_logout
 from app import db
@@ -65,12 +65,8 @@ def login():
 @user_bp.route("/logout")
 def logout():
     """Handle logout of user."""
-
-    # IMPLEMENT THIS
-
-
-##############################################################################
-# General user routes:
+    do_logout()
+    return redirect("/")
 
 
 @user_bp.route("/users")
@@ -104,7 +100,6 @@ def users_show(user_id):
         .limit(100)
         .all()
     )
-    messages = sorted(user.messages)
     return render_template("user/show.html", user=user, messages=messages)
 
 
@@ -141,7 +136,7 @@ def add_follow(follow_id):
         return redirect("/")
 
     followed_user = User.query.get_or_404(follow_id)
-    g.user.following.user_bpend(followed_user)
+    g.user.following.append(followed_user)
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
@@ -166,7 +161,30 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        user = User.authenticate(g.user.username, form.password.data)
+
+        if user:
+            for field, value in form.data.items():
+                valid_field = field != "csrf_token" and field != "password"
+                not_empty = value != ""
+                if valid_field and not_empty:
+                    setattr(user, field, value)
+            try:
+                db.session.commit()
+                g.user = user
+                return redirect(f"/users/{user.id}")
+            except SQLAlchemyError as e:
+                current_app.log_exception(e)
+                db.session.rollback()
+                flash("Due to an error, your profile could not be updated.", "danger")
+
+    return render_template("user/edit.html", form=form)
 
 
 @user_bp.route("/users/delete", methods=["POST"])
@@ -183,3 +201,32 @@ def delete_user():
     db.session.commit()
 
     return redirect("/signup")
+
+
+@user_bp.route("/users/add_like/<int:msg_id>", methods=["POST"])
+def add_like(msg_id):
+    """Toggle a like from the current user to a message."""
+
+    if not g.user:
+        flash("You must be logged in to like a message.", "danger")
+        return redirect(request.referrer)
+
+    msg = Message.query.get_or_404(msg_id)
+    if msg in g.user.likes:
+        g.user.likes.remove(msg)
+    else:
+        g.user.likes.append(msg)
+    db.session.commit()
+
+    # refresh the current requesting page, whether it's the home page or message details
+    return redirect(request.referrer)
+
+
+@user_bp.route("/users/<int:user_id>/likes", methods=["GET"])
+def show_likes(user_id):
+    """Display the messages that a user has liked."""
+
+    user = User.query.get_or_404(user_id)
+    messages = user.likes
+
+    return render_template("user/likes.html", user=user, messages=messages)
