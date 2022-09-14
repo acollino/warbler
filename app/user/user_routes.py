@@ -1,4 +1,3 @@
-from crypt import methods
 from flask import render_template, redirect, flash, request, g, current_app
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .user_forms import UserAddForm, LoginForm, EditProfileForm
