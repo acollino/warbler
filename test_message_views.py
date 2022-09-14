@@ -12,16 +12,13 @@ from app.user.user_util import CURR_USER_KEY
 
 # Environment variables are handled in config.py and .env, no need to set here
 app = init_app("config.TestConfig")
-app.app_context().push()
 
 # Context is pushed so that it exists to create the tables
+app.app_context().push()
 
+# Create our tables, dropping first to ensure they are newly created
 db.drop_all()
 db.create_all()
-
-# Create our tables (we do this here, so we only create the tables
-# once for all tests --- in each test, we'll delete the data
-# and create fresh new clean test data
 
 
 class MessageViewTestCase(TestCase):
@@ -42,7 +39,7 @@ class MessageViewTestCase(TestCase):
         db.session.commit()
 
     def test_add_message(self):
-        """Can use add a message?"""
+        """Can a user add a message?"""
 
         # Since we need to change the session to mimic logging in,
         # we need to use the changing-session trick:
@@ -63,7 +60,7 @@ class MessageViewTestCase(TestCase):
             self.assertEqual(msg.text, "Hello")
 
     def tearDown(self):
-        """Clear sample data from User and Message tables."""
+        """Clear testing data from User and Message tables."""
 
         User.query.delete()
         Message.query.delete()
