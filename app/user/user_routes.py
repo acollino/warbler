@@ -221,3 +221,13 @@ def add_like(msg_id):
 
     # refresh the current requesting page, whether it's the home page or message details
     return redirect(request.referrer)
+
+
+@user_bp.route("/users/<int:user_id>/likes", methods=["GET"])
+def show_likes(user_id):
+    """Display the messages that a user has liked."""
+
+    user = User.query.get_or_404(user_id)
+    messages = user.likes
+
+    return render_template("user/likes.html", user=user, messages=messages)
