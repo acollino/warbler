@@ -2,35 +2,26 @@
 
 # run these tests like:
 #
-#    FLASK_ENV=production python -m unittest test_message_views.py
+# python3 -m unittest test_message_views.py
 
 
-import os
 from unittest import TestCase
+from app import db, init_app
+from app.models import Message, User
+from app.user.user_util import CURR_USER_KEY
 
-from models import db, connect_db, Message, User
+# Environment variables are handled in config.py and .env, no need to set here
+app = init_app("config.TestConfig")
+app.app_context().push()
 
-# BEFORE we import our app, let's set an environmental variable
-# to use a different database for tests (we need to do this
-# before we import our app, since that will have already
-# connected to the database
+# Context is pushed so that it exists to create the tables
 
-os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
-
-
-# Now we can import app
-
-from app import app, CURR_USER_KEY
+db.drop_all()
+db.create_all()
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
-
-db.create_all()
-
-# Don't have WTForms use CSRF at all, since it's a pain to test
-
-app.config['WTF_CSRF_ENABLED'] = False
 
 
 class MessageViewTestCase(TestCase):
@@ -39,15 +30,14 @@ class MessageViewTestCase(TestCase):
     def setUp(self):
         """Create test client, add sample data."""
 
-        User.query.delete()
-        Message.query.delete()
-
         self.client = app.test_client()
 
-        self.testuser = User.signup(username="testuser",
-                                    email="test@test.com",
-                                    password="testuser",
-                                    image_url=None)
+        self.testuser = User.signup(
+            username="testuser",
+            email="test@test.com",
+            password="testuser",
+            image_url=None,
+        )
 
         db.session.commit()
 
@@ -71,3 +61,10 @@ class MessageViewTestCase(TestCase):
 
             msg = Message.query.one()
             self.assertEqual(msg.text, "Hello")
+
+    def tearDown(self):
+        """Clear sample data from User and Message tables."""
+
+        User.query.delete()
+        Message.query.delete()
+        db.session.commit()
