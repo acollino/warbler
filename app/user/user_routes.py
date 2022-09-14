@@ -1,3 +1,4 @@
+from crypt import methods
 from flask import render_template, redirect, flash, request, g, current_app
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from .user_forms import UserAddForm, LoginForm, EditProfileForm
@@ -201,3 +202,22 @@ def delete_user():
     db.session.commit()
 
     return redirect("/signup")
+
+
+@user_bp.route("/users/add_like/<int:msg_id>", methods=["POST"])
+def add_like(msg_id):
+    """Toggle a like from the current user to a message."""
+
+    if not g.user:
+        flash("You must be logged in to like a message.", "danger")
+        return redirect("/")
+
+    msg = Message.query.get_or_404(msg_id)
+    if msg in g.user.likes:
+        g.user.likes.remove(msg)
+    else:
+        g.user.likes.append(msg)
+    db.session.commit()
+
+    # refresh the current requesting page, whether it's the home page or message details
+    return redirect(request.referrer)

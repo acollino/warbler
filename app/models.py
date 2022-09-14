@@ -105,7 +105,7 @@ class User(db.Model):
         back_populates="followers",
     )
 
-    likes = db.relationship("Message", secondary="likes")
+    likes = db.relationship("Message", secondary="likes", back_populates="liked_by")
 
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
@@ -190,6 +190,8 @@ class Message(db.Model):
     )
 
     user = db.relationship("User", back_populates="messages")
+
+    liked_by = db.relationship("User", secondary="likes", back_populates="likes")
 
 
 def connect_db(app):

@@ -20,8 +20,8 @@ def homepage():
             .limit(100)
             .all()
         )
-
-        return render_template("home/home.html", messages=messages)
+        liked_msg_ids = [message.id for message in g.user.likes]
+        return render_template("home/home.html", messages=messages, likes=liked_msg_ids)
 
     else:
         return render_template("home/home-anon.html")
