@@ -113,14 +113,12 @@ class User(db.Model):
     def is_followed_by(self, other_user):
         """Is this user followed by `other_user`?"""
 
-        found_user_list = [user for user in self.followers if user == other_user]
-        return len(found_user_list) == 1
+        return other_user in self.followers
 
     def is_following(self, other_user):
         """Is this user following `other_use`?"""
 
-        found_user_list = [user for user in self.following if user == other_user]
-        return len(found_user_list) == 1
+        return other_user in self.following
 
     @classmethod
     def signup(cls, username, email, password, image_url):
