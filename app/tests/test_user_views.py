@@ -35,6 +35,22 @@ class UserViewsTestCase(TestCase):
         )
         db.session.commit()
 
+    def add_user(self, name):
+        """Add a user to the db for testing."""
+
+        user = User(email=f"{name}@test.com", username=name, password="HASHED_PASSWORD")
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+    def add_msg(self, message, id):
+        """Add a message to the db for testing."""
+
+        msg = Message(text=message, user_id=id)
+        db.session.add(msg)
+        db.session.commit()
+        return msg
+
     def test_login_success(self):
         """Can an existing user successfully log in?"""
 
@@ -220,6 +236,29 @@ class UserViewsTestCase(TestCase):
             self.assertTrue(self.testuser.is_followed_by(follower_of_user))
             self.assertFalse(self.testuser.is_followed_by(not_follower))
             self.assertFalse(self.testuser.is_following(not_follower))
+
+    def test_toggle_like(self):
+        """Can a user successfully like or unlike a post?"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+
+            # likes list should be initially empty
+            self.assertEqual(self.testuser.likes, [])
+
+            # must add a new user and msg, since you cannot like your own message
+            user_2 = self.add_user("second")
+            msg = self.add_msg("Sample text", user_2.id)
+
+            resp_like = c.post(f"/users/add_like/{msg.id}")
+            self.assertEqual(resp_like.status_code, 302)
+            self.assertEqual(self.testuser.likes, [msg])
+
+            # after a post is liked, a repeat request should remove the like
+            resp_unlike = c.post(f"/users/add_like/{msg.id}")
+            self.assertEqual(resp_unlike.status_code, 302)
+            self.assertEqual(self.testuser.likes, [])
 
     def test_delete(self):
         """Can a user successfully delete their account?"""
