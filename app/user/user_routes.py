@@ -173,11 +173,10 @@ def profile():
     form = EditProfileForm()
     if form.validate_on_submit():
         user = User.authenticate(g.user.username, form.password.data)
-
         if user:
             for field, value in form.data.items():
                 valid_field = field != "csrf_token" and field != "password"
-                not_empty = value != ""
+                not_empty = bool(value)
                 if valid_field and not_empty:
                     setattr(user, field, value)
             try:
