@@ -40,19 +40,11 @@ class MessageViewTestCase(TestCase):
     def test_add_message(self):
         """Can a user add a message?"""
 
-        # Since we need to change the session to mimic logging in,
-        # we need to use the changing-session trick:
-
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.testuser.id
 
-            # Now, that session setting is saved, so we can have
-            # the rest of ours test
-
             resp = c.post("/messages/new", data={"text": "Hello"})
-
-            # Make sure it redirects
             self.assertEqual(resp.status_code, 302)
 
             msg = Message.query.one()
