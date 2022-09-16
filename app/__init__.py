@@ -6,14 +6,12 @@ from flask_bcrypt import Bcrypt
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
-# name this create_app() instead?
-def init_app():
+# Use the development configuration by default, change to ProdConfig before deploying
+def init_app(configStr="config.DevConfig"):
     """Initialize the application"""
 
     app = Flask(__name__)
-    # Use the development configuration, change to ProdConfig before deploying
-    app.config.from_object("config.DevConfig")
-    # Can also use the config string as an argument, pass it in when init is called
+    app.config.from_object(configStr)
 
     # Initialize database
     db.init_app(app)

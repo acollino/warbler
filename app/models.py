@@ -113,14 +113,12 @@ class User(db.Model):
     def is_followed_by(self, other_user):
         """Is this user followed by `other_user`?"""
 
-        found_user_list = [user for user in self.followers if user == other_user]
-        return len(found_user_list) == 1
+        return other_user in self.followers
 
     def is_following(self, other_user):
         """Is this user following `other_use`?"""
 
-        found_user_list = [user for user in self.following if user == other_user]
-        return len(found_user_list) == 1
+        return other_user in self.following
 
     @classmethod
     def signup(cls, username, email, password, image_url):
@@ -192,13 +190,3 @@ class Message(db.Model):
     user = db.relationship("User", back_populates="messages")
 
     liked_by = db.relationship("User", secondary="likes", back_populates="likes")
-
-
-def connect_db(app):
-    """Connect this database to provided Flask app.
-
-    You should call this in your Flask app.
-    """
-
-    db.app = app
-    db.init_app(app)

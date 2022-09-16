@@ -32,11 +32,16 @@ def signup():
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", "danger")
+            db.session.rollback()
+            taken_name = User.query.filter(User.username == form.username.data).first()
+            if taken_name:
+                flash("That username is already taken.", "danger")
+            taken_email = User.query.filter(User.email == form.email.data).first()
+            if taken_email:
+                flash("That email is already registered.", "danger")
             return render_template("user/signup.html", form=form)
 
         do_login(user)
-
         return redirect("/")
 
     else:
@@ -168,11 +173,10 @@ def profile():
     form = EditProfileForm()
     if form.validate_on_submit():
         user = User.authenticate(g.user.username, form.password.data)
-
         if user:
             for field, value in form.data.items():
                 valid_field = field != "csrf_token" and field != "password"
-                not_empty = value != ""
+                not_empty = bool(value)
                 if valid_field and not_empty:
                     setattr(user, field, value)
             try:
@@ -212,11 +216,14 @@ def add_like(msg_id):
         return redirect(request.referrer)
 
     msg = Message.query.get_or_404(msg_id)
-    if msg in g.user.likes:
-        g.user.likes.remove(msg)
+    if msg.user_id != g.user.id:
+        if msg in g.user.likes:
+            g.user.likes.remove(msg)
+        else:
+            g.user.likes.append(msg)
+        db.session.commit()
     else:
-        g.user.likes.append(msg)
-    db.session.commit()
+        flash("You cannot like your own messages.", "danger")
 
     # refresh the current requesting page, whether it's the home page or message details
     return redirect(request.referrer)
