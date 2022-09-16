@@ -32,11 +32,16 @@ def signup():
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", "danger")
+            db.session.rollback()
+            taken_name = User.query.filter(User.username == form.username.data).first()
+            if taken_name:
+                flash("That username is already taken.", "danger")
+            taken_email = User.query.filter(User.email == form.email.data).first()
+            if taken_email:
+                flash("That email is already registered.", "danger")
             return render_template("user/signup.html", form=form)
 
         do_login(user)
-
         return redirect("/")
 
     else:
