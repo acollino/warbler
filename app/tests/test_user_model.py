@@ -43,17 +43,16 @@ class UserModelTestCase(TestCase):
 
     def test_login_success(self):
         """Does User authentication work with correct login info?"""
-
+        user = User.signup("testuser", "test@test.com", "testuser", None)
+        db.session.commit()
         login = User.authenticate("testuser", "testuser")
-
         self.assertTrue(login)
-        self.assertEqual(login, self.testuser)
+        self.assertEqual(login, user)
 
     def test_login_rejection(self):
         """Does User authentication fail correctly with invalid login info?"""
 
         login = User.authenticate("testuser", "wrong password")
-
         self.assertFalse(login)
 
     def tearDown(self):
