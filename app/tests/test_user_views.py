@@ -221,6 +221,23 @@ class UserViewsTestCase(TestCase):
             self.assertFalse(self.testuser.is_followed_by(not_follower))
             self.assertFalse(self.testuser.is_following(not_follower))
 
+    def test_delete(self):
+        """Can a user successfully delete their account?"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+
+            intial_count = User.query.filter(User.id == self.testuser.id).count()
+
+            resp = c.post(f"/users/delete")
+            delete_count = User.query.filter(User.id == self.testuser.id).count()
+
+            self.assertEqual(intial_count, 1)
+            self.assertEqual(delete_count, 0)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, "/signup")
+
     def tearDown(self):
         """Clear testing data from User, Message, Follows tables."""
 
