@@ -190,13 +190,3 @@ class Message(db.Model):
     user = db.relationship("User", back_populates="messages")
 
     liked_by = db.relationship("User", secondary="likes", back_populates="likes")
-
-
-def connect_db(app):
-    """Connect this database to provided Flask app.
-
-    You should call this in your Flask app.
-    """
-
-    db.app = app
-    db.init_app(app)
