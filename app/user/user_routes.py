@@ -216,11 +216,14 @@ def add_like(msg_id):
         return redirect(request.referrer)
 
     msg = Message.query.get_or_404(msg_id)
-    if msg in g.user.likes:
-        g.user.likes.remove(msg)
+    if msg.user_id != g.user.id:
+        if msg in g.user.likes:
+            g.user.likes.remove(msg)
+        else:
+            g.user.likes.append(msg)
+        db.session.commit()
     else:
-        g.user.likes.append(msg)
-    db.session.commit()
+        flash("You cannot like your own messages.", "danger")
 
     # refresh the current requesting page, whether it's the home page or message details
     return redirect(request.referrer)
