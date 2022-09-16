@@ -35,6 +35,50 @@ class UserViewsTestCase(TestCase):
         )
         db.session.commit()
 
+    def test_invalid_signup(self):
+        """Does User creation fail successfully if improper credentials are given?"""
+
+        with self.client as c:
+            resp = c.post(
+                "/signup",
+                data={
+                    "username": "tester2",
+                    "email": "invalid email",
+                    "password": "password",
+                },
+            )
+
+            # Make sure it refreshes the form page rather than redirect
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Invalid email address.", resp.text)
+
+    def test_duplicate_signup(self):
+        """Does User creation fail successfully if duplicate credentials are given?"""
+
+        with self.client as c:
+            email_resp = c.post(
+                "/signup",
+                data={
+                    "username": "tester2",
+                    "email": "test@test.com",
+                    "password": "password",
+                },
+            )
+            self.assertEqual(email_resp.status_code, 200)
+            self.assertIn("That email is already registered.", email_resp.text)
+
+            username_resp = c.post(
+                "/signup",
+                data={
+                    "username": "testuser",
+                    "email": "newtest@test.com",
+                    "password": "password",
+                },
+            )
+
+            self.assertEqual(username_resp.status_code, 200)
+            self.assertIn("That username is already taken.", username_resp.text)
+
     def test_follow_others(self):
         """Can a user follow another?"""
 
@@ -103,50 +147,6 @@ class UserViewsTestCase(TestCase):
             self.assertTrue(self.testuser.is_followed_by(follower_of_user))
             self.assertFalse(self.testuser.is_followed_by(not_follower))
             self.assertFalse(self.testuser.is_following(not_follower))
-
-    def test_invalid_signup(self):
-        """Does User creation fail successfully if improper credentials are given?"""
-
-        with self.client as c:
-            resp = c.post(
-                "/signup",
-                data={
-                    "username": "tester2",
-                    "email": "invalid email",
-                    "password": "password",
-                },
-            )
-
-            # Make sure it refreshes the form page rather than redirect
-            self.assertEqual(resp.status_code, 200)
-            self.assertIn("Invalid email address.", resp.text)
-
-    def test_duplicate_signup(self):
-        """Does User creation fail successfully if duplicate credentials are given?"""
-
-        with self.client as c:
-            email_resp = c.post(
-                "/signup",
-                data={
-                    "username": "tester2",
-                    "email": "test@test.com",
-                    "password": "password",
-                },
-            )
-            self.assertEqual(email_resp.status_code, 200)
-            self.assertIn("That email is already registered.", email_resp.text)
-
-            username_resp = c.post(
-                "/signup",
-                data={
-                    "username": "testuser",
-                    "email": "newtest@test.com",
-                    "password": "password",
-                },
-            )
-
-            self.assertEqual(username_resp.status_code, 200)
-            self.assertIn("That username is already taken.", username_resp.text)
 
     def tearDown(self):
         """Clear testing data from User, Message, Follows tables."""
