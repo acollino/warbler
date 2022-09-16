@@ -1,7 +1,7 @@
 """User views tests."""
 
 # run these tests with:
-# python3 -m unittest app.tests.test_user_model
+# python3 -m unittest app.tests.test_user_views
 
 
 from unittest import TestCase
@@ -34,6 +34,46 @@ class UserViewsTestCase(TestCase):
             image_url=None,
         )
         db.session.commit()
+
+    def test_login_success(self):
+        """Can an existing user successfully log in?"""
+
+        with self.client as c:
+            resp = c.post(
+                "/login",
+                data={
+                    "username": "testuser",
+                    "password": "testuser",
+                },
+                follow_redirects=True,
+            )
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("@testuser", resp.text)
+            self.assertIn("Hello, testuser!", resp.text)
+
+    def test_login_fail(self):
+        """Does an invalid login successfully fail?"""
+        with self.client as c:
+            wrong_pw_resp = c.post(
+                "/login",
+                data={
+                    "username": "testuser",
+                    "password": "wrongpw",
+                },
+            )
+            self.assertEqual(wrong_pw_resp.status_code, 200)
+            self.assertIn("Invalid credentials.", wrong_pw_resp.text)
+
+            empty_login_resp = c.post(
+                "/login",
+                data={
+                    "username": "",
+                    "password": "",
+                },
+            )
+            self.assertEqual(empty_login_resp.status_code, 200)
+            self.assertIn("This field is required", empty_login_resp.text)
 
     def test_invalid_signup(self):
         """Does User creation fail successfully if improper credentials are given?"""
@@ -78,6 +118,39 @@ class UserViewsTestCase(TestCase):
 
             self.assertEqual(username_resp.status_code, 200)
             self.assertIn("That username is already taken.", username_resp.text)
+
+    def test_view_profile(self):
+        """Does the user profile page load correctly?"""
+
+        with self.client as c:
+            resp = c.get(f"/users/{self.testuser.id}")
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("@testuser", resp.text)
+            self.assertIn("Followers", resp.text)
+            self.assertIn("Likes", resp.text)
+
+    def test_edit_profile(self):
+        """Can a user edit their profile page?"""
+
+        with self.client as c:
+            with c.session_transaction() as session:
+                session[CURR_USER_KEY] = self.testuser.id
+            resp = c.post(
+                f"/users/profile",
+                data={
+                    "username": "newname",
+                    "bio": "About this user",
+                    "location": "Somewhere",
+                    "password": "testuser",
+                },
+                follow_redirects=True,
+            )
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("@newname", resp.text)
+            self.assertIn("About this user", resp.text)
+            self.assertIn("Somewhere", resp.text)
 
     def test_follow_others(self):
         """Can a user follow another?"""
