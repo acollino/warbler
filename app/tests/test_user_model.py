@@ -7,7 +7,6 @@
 from unittest import TestCase
 from app import db, init_app
 from app.models import Message, User, Follows
-from app.user.user_util import CURR_USER_KEY
 
 # Environment variables are handled in config.py and .env, no need to set here
 app = init_app("config.TestConfig")
@@ -42,9 +41,25 @@ class UserModelTestCase(TestCase):
         self.assertEqual(len(u.messages), 0)
         self.assertEqual(len(u.followers), 0)
 
+    def test_login_success(self):
+        """Does User authentication work with correct login info?"""
+
+        login = User.authenticate("testuser", "testuser")
+
+        self.assertTrue(login)
+        self.assertEqual(login, self.testuser)
+
+    def test_login_rejection(self):
+        """Does User authentication fail correctly with invalid login info?"""
+
+        login = User.authenticate("testuser", "wrong password")
+
+        self.assertFalse(login)
+
     def tearDown(self):
         """Clear testing data from User, Message, Follows tables."""
 
+        db.session.rollback()
         User.query.delete()
         Message.query.delete()
         Follows.query.delete()
