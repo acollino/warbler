@@ -6,7 +6,9 @@ class Config:
     """Set the base configuration for Flask."""
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = environ.get("DATABASE_URL", "").replace(
+        "postgres://", "postgresql://", 1
+    )  # replace because heroku uses 'postgres' - not supported by SQLAlchemy
     SECRET_KEY = environ.get("SECRET_KEY")
 
 
