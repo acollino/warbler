@@ -9,7 +9,7 @@ from app import db, init_app
 from app.models import Message, User, Follows
 
 # Environment variables are handled in config.py and .env, no need to set here
-app = init_app("config.TestConfig")
+app = init_app("test.env")
 
 # Context is pushed so that it exists to create the tables
 app.app_context().push()
