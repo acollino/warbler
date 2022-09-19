@@ -1,1 +1,1 @@
-web: gunicorn warbler.wsgi
+web: gunicorn wsgi:app
